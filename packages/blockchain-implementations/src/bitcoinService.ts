@@ -31,36 +31,19 @@ export class BitcoinService implements BlockchainService {
 
   async getTransactionDetails(hash: string, network: string): Promise<any> {
     try {
-      console.log('Getting transaction details for hash:', hash);
-      console.log('Network:', network);
-      // Define API keys and URLs
-      const API_KEYS: { [key: string]: string } = {
-        mainnet: 'YOUR_MAINNET_API_KEY',
-        testnet: 'e74aa49b94568252a4d7444976647de58c8540112a476e81312e6da3d3e2fd18'
+      type Network = 'mainnet' | 'testnet';  // Define the type for the network
+      // Define the API endpoints for BlockCypher
+      const BLOCKCYPHER_API_URLS: { [key in Network]: string } = {
+        mainnet: `https://api.blockcypher.com/v1/btc/main/txs/${hash}`,
+        testnet: `https://api.blockcypher.com/v1/btc/test3/txs/${hash}`
       };
+      console.log('network:', network);
+      const url = BLOCKCYPHER_API_URLS[network as Network];
 
-      const BITCOIN_NETWORKS: { [key: string]: string } = {
-        mainnet: 'https://go.getblock.io/btc/mainnet/',
-        testnet: 'https://go.getblock.io/btc/testnet/'
-      };
+      // Make the API request
+      console.log('Fetching transaction details from:', url);
+      const response = await axios.get(url);
 
-      // Validate network type
-      if (!BITCOIN_NETWORKS[network]) {
-        throw new Error('Unsupported network');
-      }
-
-      const baseUrl = BITCOIN_NETWORKS[network];
-      const apiKey = API_KEYS[network];
-      if (!apiKey) {
-        throw new Error('API key not configured for this network');
-      }
-
-      // Fetch transaction details
-      const response = await axios.get(`${baseUrl}rawtx/${hash}`, {
-        headers: {
-          'x-api-key': apiKey
-        }
-      });
 
       const data = response.data;
 
@@ -69,29 +52,29 @@ export class BitcoinService implements BlockchainService {
 
       // Extract details
       const inputs = data.inputs.map((input: any) => ({
-        address: input.address,
-        value: formatAmount(input.value),
+        address: input.addresses[0],
+        value: formatAmount(input.output_value),
       }));
 
       const outputs = data.outputs.map((output: any) => ({
-        address: output.address,
+        address: output.addresses[0],
         value: formatAmount(output.value),
       }));
 
       return {
-        txid: data.txid,
+        txid: data.hash,
         version: data.version,
-        locktime: data.locktime,
+        locktime: data.lock_time,
         inputs,
         outputs,
         confirmations: data.confirmations,
         details: data
       };
     } catch (error: any) {
+      console.log('Error getting transaction details:', error);
       throw new Error(`Error getting transaction details: ${error.message}`);
     }
   }
-
 
 
   getTransactions(address: string): Promise<any> {

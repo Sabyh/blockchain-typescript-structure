@@ -67,8 +67,11 @@ export const trpcRouter = t.router({
             type: z.string(),
             hash: z.string(),
             networkType: z.string()
-        }).nullish())
-        .query(async ({ input }: { input: any }) => {
+        }).refine(data => data.type && data.hash && data.networkType, {
+            message: "Type and address are required"
+        }))
+        .mutation(async ({ input }: { input: any }) => {
+            console.log('Getting transaction details for hash:', input);
             const blockchainService = BlockchainFactory.getInstance(input?.type || 'bitcoin', input?.networkType);  // Default to 'bitcoin' if type is not provided
             return await blockchainService.getTransactionDetails(input?.hash, input?.networkType);
         }),
