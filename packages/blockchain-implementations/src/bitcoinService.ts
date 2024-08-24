@@ -33,12 +33,29 @@ export class BitcoinService implements BlockchainService {
   private apiBaseUrl = 'https://api.getblock.io/v1'; // Replace with your GetBlock API base URL
   private apiKey = 'YOUR_API_KEY'; // Replace with your GetBlock API key
 
-  getBalance(address: string): Promise<number> {
-    return this.getAddressInfo(address).then(info => {
-      return info.balance;
-    }).catch(error => {
-      throw new Error(`Error getting balance: ${error.message}`);
-    });
+  async getBalance(address: string, network: string): Promise<number> {
+    try {
+      console.log('Getting balance for address:', address);
+      console.log('Network:', network);
+      // BlockCypher base URL for mainnet and testnet
+      const baseUrl = network === 'mainnet'
+        ? 'https://api.blockcypher.com/v1/btc/main/addrs'
+        : 'https://api.blockcypher.com/v1/btc/test3/addrs';
+
+      // Construct the API URL
+      const url = `${baseUrl}/${address}/balance`;
+
+      // Make the API request
+      const response = await axios.get(url);
+      const data = response.data;
+
+      // The balance is returned in Satoshis, convert it to Bitcoins
+      const balanceBitcoin = data.balance / 1e8;
+
+      return balanceBitcoin; // Return as a number
+    } catch (error: any) {
+      throw new Error(`Error getting Bitcoin balance: ${error.message}`);
+    }
   }
 
   generateDepositAddress(xPub: string, index: number): Promise<string> {

@@ -1,5 +1,5 @@
 export interface BlockchainService {
-    getBalance(address: string): Promise<number>;
+    getBalance(address: string, network: string): Promise<number>;
     importAccount(address: string, network: string): Promise<any>;
     // sendTransaction(from: string, to: string, amount: number): Promise<string>;
     createAccount(networkType: string): Promise<any>;

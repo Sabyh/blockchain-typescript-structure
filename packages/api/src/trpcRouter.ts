@@ -13,9 +13,9 @@ export const trpcRouter = t.router({
             address: z.string(),
             networkType: z.string().optional()  // Make networkType optional
         }).nullish())
-        .query(async ({ input }: { input: any }) => {
+        .mutation(async ({ input }: { input: any }) => {
             const blockchainService = BlockchainFactory.getInstance(input?.type || 'bitcoin', input?.networkType);  // Default to 'bitcoin' if type is not provided
-            return await blockchainService.getBalance(input?.address || '');
+            return await blockchainService.getBalance(input?.address || '', input?.networkType);    
         }),
 
     createAccount: t.procedure

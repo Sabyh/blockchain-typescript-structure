@@ -4,7 +4,7 @@ import { EthereumService, BitcoinService, MaticService } from 'blockchain-implem
 // Define possible network types for Ethereum and Bitcoin
 type EthereumNetwork = 'mainnet' | 'ropsten' | 'rinkeby' | 'goerli' | 'kovan' | 'sepolia' | 'testnet';
 type MaticNetwork = 'mainnet' | 'sepolia' | 'testnet';
-type BitcoinNetwork = string; // Define Bitcoin network types as needed
+type BitcoinNetwork = 'mainnet' | 'testnet'; // Define Bitcoin network types as needed
 
 export class BlockchainFactory {
     private static instances: { [key: string]: BlockchainService } = {};
