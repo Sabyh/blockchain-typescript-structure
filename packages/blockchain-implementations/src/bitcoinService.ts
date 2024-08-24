@@ -9,6 +9,26 @@ const ECPairFactory = require('ecpair').default;
 const ECPair = ECPairFactory(ecc);
 const bip32 = BIP32Factory(ecc);
 
+interface TransactionInput {
+  addresses: string[];
+  output_value: number;
+}
+
+interface TransactionOutput {
+  addresses: string[];
+  value: number;
+}
+
+interface TransactionData {
+  hash: string;
+  version: number;
+  lock_time: number;
+  inputs: TransactionInput[];
+  outputs: TransactionOutput[];
+  received: number;
+}
+
+
 export class BitcoinService implements BlockchainService {
   private apiBaseUrl = 'https://api.getblock.io/v1'; // Replace with your GetBlock API base URL
   private apiKey = 'YOUR_API_KEY'; // Replace with your GetBlock API key
@@ -29,53 +49,68 @@ export class BitcoinService implements BlockchainService {
     throw new Error('Method not implemented.');
   }
 
-  async getTransactionDetails(hash: string, network: string): Promise<any> {
+  async getTransactionDetails(hash: string, network: 'mainnet' | 'testnet'): Promise<any> {
     try {
-      type Network = 'mainnet' | 'testnet';  // Define the type for the network
       // Define the API endpoints for BlockCypher
-      const BLOCKCYPHER_API_URLS: { [key in Network]: string } = {
+      const BLOCKCYPHER_API_URLS: { [key in 'mainnet' | 'testnet']: string } = {
         mainnet: `https://api.blockcypher.com/v1/btc/main/txs/${hash}`,
         testnet: `https://api.blockcypher.com/v1/btc/test3/txs/${hash}`
       };
-      console.log('network:', network);
-      const url = BLOCKCYPHER_API_URLS[network as Network];
+
+      const url = BLOCKCYPHER_API_URLS[network];
 
       // Make the API request
-      console.log('Fetching transaction details from:', url);
-      const response = await axios.get(url);
-
-
+      const response = await axios.get<TransactionData>(url);
       const data = response.data;
 
       // Convert amount from satoshis to BTC
       const formatAmount = (satoshis: number) => (satoshis / 1e8).toFixed(8);
 
       // Extract details
-      const inputs = data.inputs.map((input: any) => ({
+      const inputs = data.inputs.map((input: TransactionInput) => ({
         address: input.addresses[0],
         value: formatAmount(input.output_value),
       }));
 
-      const outputs = data.outputs.map((output: any) => ({
+      const outputs = data.outputs.map((output: TransactionOutput) => ({
         address: output.addresses[0],
         value: formatAmount(output.value),
       }));
+
+      // Validate and convert transaction date
+      let transactionDate: Number;
+      transactionDate = data.received;
+
+      // Hyperlinks for transaction and addresses
+      const transactionLink = `https://blockchain.info/tx/${data.hash}`;  // Change this URL if using a different block explorer
+      const addressLinks = {
+        inputs: inputs.map(input => `https://blockchain.info/address/${input.address}`),
+        outputs: outputs.map(output => `https://blockchain.info/address/${output.address}`)
+      };
 
       return {
         txid: data.hash,
         version: data.version,
         locktime: data.lock_time,
-        inputs,
-        outputs,
-        confirmations: data.confirmations,
-        details: data
+        inputs: inputs.map((input, index) => ({
+          address: input.address,
+          value: input.value,
+          hyperlink: addressLinks.inputs[index]
+        })),
+        outputs: outputs.map((output, index) => ({
+          address: output.address,
+          value: output.value,
+          hyperlink: addressLinks.outputs[index]
+        })),
+        quantity: outputs.reduce((total: number, output) => total + parseFloat(output.value), 0),
+        transactionDate,
+        transactionLink
       };
     } catch (error: any) {
       console.log('Error getting transaction details:', error);
       throw new Error(`Error getting transaction details: ${error.message}`);
     }
   }
-
 
   getTransactions(address: string): Promise<any> {
     throw new Error('Method not implemented.');
