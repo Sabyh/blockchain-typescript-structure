@@ -10,48 +10,44 @@ export const trpcRouter = t.router({
     getBalance: t.procedure
         .input(z.object({
             type: z.string(),
-            address: z.string()
+            address: z.string(),
+            networkType: z.string().optional()  // Make networkType optional
         }).nullish())
         .query(async ({ input }: { input: any }) => {
-            const blockchainService = BlockchainFactory.getInstance(input?.type || 'bitcoin');  // Default to 'bitcoin' if type is not provided
+            const blockchainService = BlockchainFactory.getInstance(input?.type || 'bitcoin', input?.networkType);  // Default to 'bitcoin' if type is not provided
             return await blockchainService.getBalance(input?.address || '');
         }),
 
     createAccount: t.procedure
         .input(z.object({
             type: z.string(),
-            networkType: z.string()
+            networkType: z.string().optional()  // Make networkType optional
         }).nullish())
         .mutation(async ({ input }: { input: any }) => {
-            const blockchainService = BlockchainFactory.getInstance(input?.type || 'bitcoin');  // Default to 'bitcoin' if type is not provided
-            return await blockchainService.createAccount(input?.networkType);
+            const blockchainService = BlockchainFactory.getInstance(input?.type || 'bitcoin', input?.networkType);  // Default to 'bitcoin' if type is not provided
+            return await blockchainService.createAccount(input?.networkType || '');
         }),
 
-     importAccount : t.procedure
+    importAccount: t.procedure
         .input(z.object({
             type: z.string(),
             address: z.string(),
-            networkType: z.string(),  // Make network optional if not required for all blockchains
-        }))
-        .mutation(async ({ input }: { input: { type: string; address: string; networkType: string } }) => {
+            networkType: z.string().optional()  // Make networkType optional
+        }).nullish())
+        .mutation(async ({ input }: { input: any }) => {
             const { type, address, networkType } = input;
-
-            // Get the blockchain service instance based on the type
-            const blockchainService = BlockchainFactory.getInstance(type);
-
-            // Import the account using the provided address and network
-            // Assume `importAccount` is a method in your BlockchainService interface
-            return await blockchainService.importAccount(address, networkType);
+            const blockchainService = BlockchainFactory.getInstance(type, networkType);
+            return await blockchainService.importAccount(address, input?.networkType || '');
         }),
 
     generateDepositAddress: t.procedure
         .input(z.object({
             type: z.string(),
             xPub: z.string(),
-            index: z.number(),
+            index: z.number()
         }).nullish())
         .mutation(async ({ input }: { input: any }) => {
-            const blockchainService = BlockchainFactory.getInstance(input?.type || 'bitcoin');  // Default to 'bitcoin' if type is not provided
+            const blockchainService = BlockchainFactory.getInstance(input?.type || 'bitcoin', input?.networkType);
             return await blockchainService.generateDepositAddress(input?.xPub || '', input?.index || 0);
         }),
 
@@ -59,21 +55,22 @@ export const trpcRouter = t.router({
         .input(z.object({
             type: z.string(),
             mnemonic: z.string(),
-            index: z.number(),
+            index: z.number()
         }).nullish())
         .mutation(async ({ input }: { input: any }) => {
-            const blockchainService = BlockchainFactory.getInstance(input?.type || 'bitcoin');  // Default to 'bitcoin' if type is not provided
+            const blockchainService = BlockchainFactory.getInstance(input?.type || 'bitcoin', input?.networkType);
             return await blockchainService.generatePrivateKey(input?.mnemonic || '', input?.index || 0);
         }),
 
     getTransactionDetails: t.procedure
         .input(z.object({
             type: z.string(),
-            hash: z.string()
+            hash: z.string(),
+            networkType: z.string()
         }).nullish())
         .query(async ({ input }: { input: any }) => {
-            const blockchainService = BlockchainFactory.getInstance(input?.type || 'bitcoin');  // Default to 'bitcoin' if type is not provided
-            return await blockchainService.getTransactionDetails(input?.hash || '');
+            const blockchainService = BlockchainFactory.getInstance(input?.type || 'bitcoin', input?.networkType);  // Default to 'bitcoin' if type is not provided
+            return await blockchainService.getTransactionDetails(input?.hash, input?.networkType);
         }),
 
     getTransactions: t.procedure
@@ -82,7 +79,7 @@ export const trpcRouter = t.router({
             address: z.string()
         }).nullish())
         .query(async ({ input }: { input: any }) => {
-            const blockchainService = BlockchainFactory.getInstance(input?.type || 'bitcoin');  // Default to 'bitcoin' if type is not provided
+            const blockchainService = BlockchainFactory.getInstance(input?.type || 'bitcoin', input?.networkType);  // Default to 'bitcoin' if type is not provided
             return await blockchainService.getTransactions(input?.address || '');
         }),
 
@@ -92,10 +89,10 @@ export const trpcRouter = t.router({
             fromAddress: z.string(),
             privateKey: z.string(),
             toAddress: z.string(),
-            amount: z.number(),
+            amount: z.number()
         }).nullish())
         .mutation(async ({ input }: { input: any }) => {
-            const blockchainService = BlockchainFactory.getInstance(input?.type || 'bitcoin');  // Default to 'bitcoin' if type is not provided
+            const blockchainService = BlockchainFactory.getInstance(input?.type || 'bitcoin', input?.networkType);  // Default to 'bitcoin' if type is not provided
             return await blockchainService.sendTransaction(
                 input?.fromAddress || '',
                 input?.privateKey || '',
@@ -103,7 +100,4 @@ export const trpcRouter = t.router({
                 input?.amount || 0
             );
         }),
-
-
-
 });

@@ -5,7 +5,7 @@ export interface BlockchainService {
     createAccount(networkType: string): Promise<any>;
     generateDepositAddress(xPub: string, index: number): Promise<string>;
     generatePrivateKey(mnemonic: string, index: number): Promise<string>;
-    getTransactionDetails(hash: string): Promise<any>;
+    getTransactionDetails(hash: string, network: string): Promise<any>;
     getTransactions(address: string): Promise<any>;
     sendTransaction(fromAddress: string, privateKey: string, toAddress: string, amount: number): Promise<string>;
 }
