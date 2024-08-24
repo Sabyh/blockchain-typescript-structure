@@ -42,7 +42,7 @@ export class MaticService implements BlockchainService {
     }
   }
 
-  async importAccount(input: string): Promise<any> {
+  async importAccount(input: string, network: string): Promise<any> {
     try {
       // Check if input is a valid Ethereum address
       if (input.startsWith('0x') && input.length === 42 && /^[0-9a-fA-F]{40}$/.test(input.slice(2))) {

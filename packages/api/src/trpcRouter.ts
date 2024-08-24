@@ -20,10 +20,28 @@ export const trpcRouter = t.router({
     createAccount: t.procedure
         .input(z.object({
             type: z.string(),
+            networkType: z.string()
         }).nullish())
         .mutation(async ({ input }: { input: any }) => {
             const blockchainService = BlockchainFactory.getInstance(input?.type || 'bitcoin');  // Default to 'bitcoin' if type is not provided
-            return await blockchainService.createAccount();
+            return await blockchainService.createAccount(input?.networkType);
+        }),
+
+     importAccount : t.procedure
+        .input(z.object({
+            type: z.string(),
+            address: z.string(),
+            networkType: z.string(),  // Make network optional if not required for all blockchains
+        }))
+        .mutation(async ({ input }: { input: { type: string; address: string; networkType: string } }) => {
+            const { type, address, networkType } = input;
+
+            // Get the blockchain service instance based on the type
+            const blockchainService = BlockchainFactory.getInstance(type);
+
+            // Import the account using the provided address and network
+            // Assume `importAccount` is a method in your BlockchainService interface
+            return await blockchainService.importAccount(address, networkType);
         }),
 
     generateDepositAddress: t.procedure
@@ -85,7 +103,7 @@ export const trpcRouter = t.router({
                 input?.amount || 0
             );
         }),
-    
+
 
 
 });

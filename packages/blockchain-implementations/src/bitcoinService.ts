@@ -9,7 +9,6 @@ const ECPairFactory = require('ecpair').default;
 // const bip32 = BIP32Factory(ecc);
 const ECPair = ECPairFactory(ecc);
 const bip32 = BIP32Factory(ecc);
-const network = bitcoin.networks.testnet; // Otherwise, bitcoin = mainnet and regnet = local
 
 export class BitcoinService implements BlockchainService {
   getBalance(address: string): Promise<number> {
@@ -31,8 +30,9 @@ export class BitcoinService implements BlockchainService {
     throw new Error('Method not implemented.');
   }
 
-  async createAccount(): Promise<{ mnemonic: string, address: string, privateKey: string }> {
+  async createAccount(networkType: string): Promise<{ mnemonic: string, address: string, privateKey: string }> {
     try {
+      const network = networkType === 'testnet' ? bitcoin.networks.testnet : bitcoin.networks.bitcoin;
       // Generate a random mnemonic (12-word phrase)
       const mnemonic = bip39.generateMnemonic();
 
@@ -61,7 +61,7 @@ export class BitcoinService implements BlockchainService {
     }
   }
 
-  private static isBitcoinAddress(address: string): boolean {
+  async isBitcoinAddress(address: string): Promise<boolean> {
     try {
       bitcoin.address.fromBech32(address);
       return true;
@@ -75,30 +75,32 @@ export class BitcoinService implements BlockchainService {
     }
   }
 
-  public static async importAccount(input: string): Promise<any> {
+  async importAccount(address: string, networkType: string): Promise<any> {
     try {
+      const network = networkType === 'testnet' ? bitcoin.networks.testnet : bitcoin.networks.bitcoin;
       // Check if input is a valid Bitcoin address
-      if (this.isBitcoinAddress(input)) {
+      if (await this.isBitcoinAddress(address)) {
         throw new Error('Cannot import directly from Bitcoin address. Requires private key.');
       }
-
       // Check if input is a valid mnemonic phrase
-      if (bip39.validateMnemonic(input)) {
-        return this.importAccountFromMnemonic(input);
+      if (bip39.validateMnemonic(address)) {
+        return await this.importAccountFromMnemonic(address, network);
       }
 
       // If input is neither address nor mnemonic, assume it's a private key
-      return this.importAccountFromPrivateKey(input);
+      return await this.importAccountFromPrivateKey(address, network);
 
     } catch (error: any) {
       throw new Error(`Error importing account: ${error.message}`);
     }
   }
 
-  private static async importAccountFromPrivateKey(
-    privateKey: string
+  async importAccountFromPrivateKey(
+    privateKey: string,
+    networkType: any
   ): Promise<{ address: string; privateKey: string }> {
     try {
+      const network = networkType === 'testnet' ? bitcoin.networks.testnet : bitcoin.networks.bitcoin;
       // Import the key pair from the given private key
       const keyPair = ECPair.fromWIF(privateKey, network);
 
@@ -117,16 +119,29 @@ export class BitcoinService implements BlockchainService {
     }
   }
 
-  private static async importAccountFromMnemonic(mnemonic: string): Promise<{ address: string; privateKey: string; mnemonic: string }> {
+  async importAccountFromMnemonic(mnemonic: string, networkType: any): Promise<{ address: string; privateKey: string; mnemonic: string }> {
     try {
+      const network = networkType === 'testnet' ? bitcoin.networks.testnet : bitcoin.networks.bitcoin;
+      // Validate the mnemonic
+      console.log('mnemonic', mnemonic);
       if (!bip39.validateMnemonic(mnemonic)) {
         throw new Error('Invalid mnemonic phrase');
       }
 
+      // Convert mnemonic to seed
       const seed = bip39.mnemonicToSeedSync(mnemonic);
+
+      // Create root from seed using BIP32
       const root = bip32.fromSeed(seed, bitcoin.networks.bitcoin);
+
+      // Derive the account path using BIP44 for Bitcoin
       const path = `m/44'/0'/0'/0/0`;
       const account = root.derivePath(path);
+
+      // Extract the private key in WIF format
+      const privateKey = account.toWIF();
+
+      // Generate the public address
       const { address } = bitcoin.payments.p2pkh({
         pubkey: account.publicKey,
         network: bitcoin.networks.bitcoin,
@@ -134,11 +149,12 @@ export class BitcoinService implements BlockchainService {
 
       return {
         address: address!,
-        privateKey: account.toWIF(),
+        privateKey: privateKey,
         mnemonic: mnemonic
       };
     } catch (error: any) {
       throw new Error(`Error importing account from mnemonic: ${error.message}`);
     }
   }
+
 }
