@@ -6,7 +6,7 @@ import { ethers } from 'ethers';
 import * as bip39 from 'bip39';
 
 // Define network types
-type NetworkName = 'mainnet' | 'sepolia';
+type NetworkName = 'mainnet' | 'sepolia' | 'testnet';
 
 // Define network configurations
 const NETWORKS: Record<NetworkName, { url: string; chainId: number }> = {
@@ -15,9 +15,14 @@ const NETWORKS: Record<NetworkName, { url: string; chainId: number }> = {
     chainId: 1
   },
   sepolia: {
-    url: 'https://sepolia.infura.io/v3/YOUR_INFURA_PROJECT_ID',
+    url: 'https://go.getblock.io/9b37b662118d4655bb0c2c4818ffbedf',
     chainId: 11155111
-  }
+  },
+  testnet: {
+    url: 'https://go.getblock.io/9b37b662118d4655bb0c2c4818ffbedf',
+    chainId: 11155111
+  },
+
 };
 
 export class MaticService implements BlockchainService {
@@ -119,12 +124,26 @@ export class MaticService implements BlockchainService {
   async getTransactionDetails(hash: string): Promise<any> {
     try {
       const receipt = await this.web3.eth.getTransaction(hash);
-      const amount = this.web3.utils.fromWei(receipt.value, 'ether');
+      console.log('Transaction receipt:', receipt);
+
+      // Convert BigInt to string
+      const value = this.web3.utils.fromWei(receipt.value, 'ether');
+      const gasPrice = this.web3.utils.fromWei(receipt.gasPrice, 'ether'); // Convert gas price to ether if needed
+      const block = await this.web3.eth.getBlock(receipt.blockNumber || 'latest');
+
+      // Convert block timestamp from BigInt to a number
+      const timestamp = Number(block.timestamp);  // Convert BigInt to number
+
+      // Format the transaction date
+      const transactionDate = new Date(timestamp * 1000).toISOString();
+
       return {
-        value: amount,
+        value, // Ether value as string
         from: receipt.from,
         to: receipt.to,
-        details: receipt
+        gasPrice, // Ether gas price as string
+        transactionHash: receipt.hash,
+        transactionDate
       };
     } catch (error: any) {
       throw new Error(`Error getting transaction details: ${error.message}`);

@@ -2,8 +2,8 @@ import { BlockchainService } from 'blockchain-interfaces';
 import { EthereumService, BitcoinService, MaticService } from 'blockchain-implementations';
 
 // Define possible network types for Ethereum and Bitcoin
-type EthereumNetwork = 'mainnet' | 'ropsten' | 'rinkeby' | 'goerli' | 'kovan' | 'sepolia';
-type MaticNetwork = 'mainnet' | 'sepolia';
+type EthereumNetwork = 'mainnet' | 'ropsten' | 'rinkeby' | 'goerli' | 'kovan' | 'sepolia' | 'testnet';
+type MaticNetwork = 'mainnet' | 'sepolia' | 'testnet';
 type BitcoinNetwork = string; // Define Bitcoin network types as needed
 
 export class BlockchainFactory {
@@ -13,7 +13,7 @@ export class BlockchainFactory {
         if (!this.instances[type]) {
             switch (type) {
                 case 'ethereum':
-                    if (typeof network !== 'string' || !['mainnet', 'ropsten', 'rinkeby', 'goerli', 'kovan', 'sepolia'].includes(network)) {
+                    if (typeof network !== 'string' || !['mainnet', 'ropsten', 'rinkeby', 'goerli', 'kovan', 'sepolia', 'testnet'].includes(network)) {
                         throw new Error('Invalid Ethereum network');
                     }
                     this.instances[type] = new EthereumService(network as EthereumNetwork);
