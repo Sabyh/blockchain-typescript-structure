@@ -5,7 +5,7 @@ import { BlockchainService } from 'blockchain-interfaces';
 import { ethers } from 'ethers';
 import * as bip39 from 'bip39';
 
-export class EthereumService implements BlockchainService {
+export class MaticService implements BlockchainService {
     private web3: Web3;
     private EthereumTx: typeof EthereumTx;
 
