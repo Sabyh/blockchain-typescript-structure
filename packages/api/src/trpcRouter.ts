@@ -1,12 +1,13 @@
 import { initTRPC } from '@trpc/server';
 import { z } from 'zod';
 import { BlockchainFactory } from './blockchainFactory';  // Adjust the path as needed
-
+import { AgreementFactory } from './agreementHandler';  // Adjust the path as needed
 // Initialize tRPC
 const t = initTRPC.create();
 
 // Create the router using `initTRPC`
 export const trpcRouter = t.router({
+    // Blockchain-related procedures
     getBalance: t.procedure
         .input(z.object({
             type: z.string(),
@@ -103,4 +104,72 @@ export const trpcRouter = t.router({
                 input?.amount || 0
             );
         }),
+
+    // Agreement-related procedures
+    createAgreement: t.procedure
+        .input(z.object({
+            agreementType: z.string(),  // e.g., 'ClientTenant', 'ClientLandlord'
+            agreementNo: z.string(),
+            clientName: z.string(),
+            partyName: z.string(),
+            agreementDate: z.number(),
+            expiryDate: z.number(),
+            ipfsHash: z.string()
+        }).nullish())
+        .mutation(async ({ input }: { input: any }) => {
+            const agreementInstance = new AgreementFactory();
+            // Add your logic to create an agreement via your contract interaction
+            await agreementInstance.storeAgreement(
+                input?.agreementType,
+                input?.agreementNo,
+                input?.clientName,
+                input?.partyName,
+                input?.agreementDate,
+                input?.expiryDate,
+                input?.ipfsHash
+            );
+            return { success: true };
+        }),
+
+    updateAgreement: t.procedure
+        .input(z.object({
+            agreementNo: z.string(),
+            clientName: z.string(),
+            partyName: z.string(),
+            expiryDate: z.number(),
+            ipfsHash: z.string()
+        }).nullish())
+        .mutation(async ({ input }: { input: any }) => {
+            const agreementInstance = new AgreementFactory();
+            await agreementInstance.updateAgreement(
+                input?.agreementNo,
+                input?.clientName,
+                input?.partyName,
+                input?.expiryDate,
+                input?.ipfsHash
+            );
+            return { success: true };
+        }),
+
+    deleteAgreement: t.procedure
+        .input(z.object({
+            agreementNo: z.string()
+        }).nullish())
+        .mutation(async ({ input }: { input: any }) => {
+            // Add your logic to delete an agreement via your contract interaction
+            const agreementInstance = new AgreementFactory();
+            await agreementInstance.deleteAgreement(input?.agreementNo);
+            return { success: true };
+        }),
+
+    getAgreement: t.procedure
+        .input(z.object({
+            agreementNo: z.string()
+        }).nullish())
+        .mutation(async ({ input }: { input: any }) => {
+            const agreementInstance = new AgreementFactory();
+            // Add your logic to get an agreement via your contract interaction
+            const agreement = await agreementInstance.getAgreement(input?.agreementNo);
+            return agreement;
+        })
 });
