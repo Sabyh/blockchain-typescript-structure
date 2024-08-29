@@ -11,11 +11,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@helia/unixfs": "^3.0.7",
     "@trpc/client": "^10.45.2",
     "@trpc/server": "^10.45.2",
     "blockchain-implementations": "workspace:*",
     "blockchain-interfaces": "workspace:*",
+    "blockstore-core": "^5.0.0",
     "ethers": "^6.13.2",
+    "helia": "^4.2.5",
     "zod": "^3.23.8"
   }
 }

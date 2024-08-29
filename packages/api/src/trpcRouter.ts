@@ -2,6 +2,8 @@ import { initTRPC } from '@trpc/server';
 import { z } from 'zod';
 import { BlockchainFactory } from './blockchainFactory';  // Adjust the path as needed
 import { AgreementFactory } from './agreementHandler';  // Adjust the path as needed
+// import { uploadPDFWithHelia } from './ipfsHandler.js';
+
 // Initialize tRPC
 const t = initTRPC.create();
 
@@ -16,7 +18,7 @@ export const trpcRouter = t.router({
         }).nullish())
         .mutation(async ({ input }: { input: any }) => {
             const blockchainService = BlockchainFactory.getInstance(input?.type || 'bitcoin', input?.networkType);  // Default to 'bitcoin' if type is not provided
-            return await blockchainService.getBalance(input?.address || '', input?.networkType);    
+            return await blockchainService.getBalance(input?.address || '', input?.networkType);
         }),
 
     createAccount: t.procedure
@@ -171,5 +173,5 @@ export const trpcRouter = t.router({
             // Add your logic to get an agreement via your contract interaction
             const agreement = await agreementInstance.getAgreement(input?.agreementNo);
             return agreement;
-        })
+        }),
 });
